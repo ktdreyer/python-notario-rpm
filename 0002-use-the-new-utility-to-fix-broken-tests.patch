@@ -1,0 +1,93 @@
+From e422b6ae706833011a0e7e7876a2e417eee9b3fc Mon Sep 17 00:00:00 2001
+From: Alfredo Deza <alfredo@deza.pe>
+Date: Fri, 5 Feb 2016 08:52:31 -0500
+Subject: [PATCH] use the new utility to fix broken tests
+
+Signed-off-by: Alfredo Deza <alfredo@deza.pe>
+(cherry picked from commit 42a8018675175625342c0e8b6a14256914caddd6)
+---
+ notario/tests/test_engine.py           |  4 +++-
+ notario/tests/validators/test_types.py | 17 ++++++++++++-----
+ 2 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/notario/tests/test_engine.py b/notario/tests/test_engine.py
+index 1aa0922..f77e8c1 100644
+--- a/notario/tests/test_engine.py
++++ b/notario/tests/test_engine.py
+@@ -3,6 +3,7 @@ from notario import engine
+ from notario.exceptions import Invalid, SchemaError
+ from notario.validators import recursive, iterables, types
+ from notario.decorators import optional
++from notario.tests import util
+ 
+ 
+ class TestEnforce(object):
+@@ -33,7 +34,8 @@ class TestEnforce(object):
+         def callable_message(v): assert False, "this is completely False"
+         with raises(Invalid) as exc:
+             engine.enforce(1, callable_message, ['1'], 'key')
+-        assert exc.value.reason == "this is completely False"
++        result = util.assert_message(exc.value.reason)
++        assert result  == "this is completely False"
+ 
+ 
+ class TestValidator(object):
+diff --git a/notario/tests/validators/test_types.py b/notario/tests/validators/test_types.py
+index d951916..b9ea3e3 100644
+--- a/notario/tests/validators/test_types.py
++++ b/notario/tests/validators/test_types.py
+@@ -1,5 +1,6 @@
+ from pytest import raises
+ from notario.validators import types
++from notario.tests import util
+ 
+ #
+ # Most of these are just excercising the code really
+@@ -143,7 +144,8 @@ class TestTypesDelegating(object):
+ 
+         with raises(AssertionError) as exc:
+             validate('123')
+-        assert exc.value.args[0] == 'too long'
++        result = util.assert_message(exc)
++        assert result == 'too long'
+ 
+     def test_boolean_decorated(self):
+         @types.boolean
+@@ -152,7 +154,8 @@ class TestTypesDelegating(object):
+ 
+         with raises(AssertionError) as exc:
+             validate(True)
+-        assert exc.value.args[0] == 'not false'
++        result = util.assert_message(exc)
++        assert result == 'not false'
+ 
+     def test_dictionary_decorated(self):
+         @types.dictionary
+@@ -161,7 +164,8 @@ class TestTypesDelegating(object):
+ 
+         with raises(AssertionError) as exc:
+             validate({'a': 1, 'b': 2})
+-        assert exc.value.args[0] == 'too long'
++        result = util.assert_message(exc)
++        assert result == 'too long'
+ 
+     def test_array_decorated(self):
+         @types.array
+@@ -170,7 +174,8 @@ class TestTypesDelegating(object):
+ 
+         with raises(AssertionError) as exc:
+             validate([1, 2])
+-        assert exc.value.args[0] == 'too long'
++        result = util.assert_message(exc)
++        assert result == 'too long'
+ 
+     def test_integer_fail(self):
+         @types.integer
+@@ -179,4 +184,6 @@ class TestTypesDelegating(object):
+ 
+         with raises(AssertionError) as exc:
+             validate(3)
+-        assert exc.value.args[0] == 'too big'
++
++        result = util.assert_message(exc)
++        assert result == 'too big'
